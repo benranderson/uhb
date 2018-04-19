@@ -26,6 +26,36 @@ def plot_stiffnesses(burial_depths, results, soil_type):
     fig.savefig(f"outputs/{soil_type}.png")
 
 
+def write_stiffnesses_to_file(results):
+    with open(f"outputs/stiffnesses.txt", "w") as o:
+        o.write(f"STIFFNESSES\n")
+        for soil in results:
+            o.write(f"\nSoil type: {soil}\n")
+            o.write(f"{'-'*(11+len(soil))}\n\n")
+            for burial_depth in results[soil]:
+                o.write(f"Burial depth: {burial_depth:.1f} m\n\n")
+                o.write("Axial\n")
+                T_u = results[soil][burial_depth]["T_u"]
+                delta_t = results[soil][burial_depth]["delta_t"]
+                K_a = results[soil][burial_depth]["K_a"]
+                o.write(f"{T_u:.6f}, {delta_t:.6f}, {K_a:.6f}\n")
+                o.write("Lateral\n")
+                P_u = results[soil][burial_depth]["P_u"]
+                delta_p = results[soil][burial_depth]["delta_p"]
+                K_l = results[soil][burial_depth]["K_l"]
+                o.write(f"{P_u:.6f}, {delta_p:.6f}, {K_l:.6f}\n")
+                o.write("Vertical Uplift\n")
+                Q_u = results[soil][burial_depth]["Q_u"]
+                delta_qu = results[soil][burial_depth]["delta_qu"]
+                K_vu = results[soil][burial_depth]["K_vu"]
+                o.write(f"{Q_u:.6f}, {delta_qu:.6f}, {K_vu:.6f}\n")
+                o.write("Vertical Bearing\n")
+                Q_d = results[soil][burial_depth]["Q_d"]
+                delta_qd = results[soil][burial_depth]["delta_qd"]
+                K_vb = results[soil][burial_depth]["K_vb"]
+                o.write(f"{Q_d:.6f}, {delta_qd:.6f}, {K_vb:.6f}\n\n")
+
+
 if __name__ == "__main__":
     D = 0.1731
     f = 0.6
@@ -93,18 +123,20 @@ if __name__ == "__main__":
                 "K_vb": Q_d / delta_qd,
             }
 
-        print(
-            soil.DepthEquilibrium(
-                soils[soil_case]["phi_s"],
-                soils[soil_case]["c"],
-                D,
-                soils[soil_case]["gamma"],
-                soil_case,
-            )
-        )
+    write_stiffnesses_to_file(results)
 
-    with open("outputs/soil_stiffnesses.json", "w") as outfile:
-        json.dump(results, outfile, indent=4)
+# print(
+#     soil.DepthEquilibrium(
+#         soils[soil_case]["phi_s"],
+#         soils[soil_case]["c"],
+#         D,
+#         soils[soil_case]["gamma"],
+#         soil_case,
+#     )
+# )
 
-    plot_stiffnesses(burial_depths, results, "soft clay")
-    plot_stiffnesses(burial_depths, results, "dense sand")
+# with open("outputs/soil_stiffnesses.json", "w") as outfile:
+#     json.dump(results, outfile, indent=4)
+
+# plot_stiffnesses(burial_depths, results, "soft clay")
+# plot_stiffnesses(burial_depths, results, "dense sand")

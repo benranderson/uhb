@@ -173,3 +173,20 @@ def DepthEquilibrium(psi, c, D, gamma, soil):
     Qds.append(F_max)
     Fd = np.stack((penetrations, Qds), axis=-1)
     return Fd
+
+
+def uplift_resistance(soil, gamma, H, D):
+    """Returns drained uplift resistance.
+
+    DNVGL-RP-F114 - Equation (5.5)
+
+    :param soil: str
+    :param gamma: Submerged weight of soil []
+    :param H: Cover height (above pipe) [m]
+    :param D: Outer pipe diameter [m]
+    """
+    resistance_factors = {"loose sand": 0.29, "medium sand": 0.47, "dense sand": 0.62}
+    f = resistance_factors[soil]
+    return gamma * H * D + gamma * D ** 2 * (0.5 - pi / 8) + f * gamma * (
+        H + 0.5 * D
+    ) ** 2
