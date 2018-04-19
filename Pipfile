@@ -1,0 +1,25 @@
+[[source]]
+
+url = "https://pypi.python.org/simple"
+verify_ssl = true
+name = "pypi"
+
+
+[packages]
+
+matplotlib = "*"
+numpy = "*"
+scipy = "*"
+
+
+[dev-packages]
+
+pylint = "*"
+"autopep8" = "*"
+black = "*"
+pytest = "*"
+
+
+[requires]
+
+python_version = "3.6"
