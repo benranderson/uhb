@@ -2,8 +2,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-def natural_wavelength(E, I, delta_f, W_sub):
-    """Returns the natural wavelength for
+def natural_wavelength(gamma_factor, E, I, delta_f, W_sub):
+    """Returns the factored natural wavelength i.e. the distance from prop to
+    touchdown.
 
     JIP 
 
@@ -12,12 +13,13 @@ def natural_wavelength(E, I, delta_f, W_sub):
     :param delta_f: 
     :W_sub: Submerged pipe weight [kg/m^3]
     """
-    return (72 * E * I * delta_f / W_sub) ** (1 / 4)
+    return gamma_factor * (72 * E * I * delta_f / W_sub) ** (1 / 4)
 
 
 def foundation_profile(x, delta_f, L_o):
-    """
-    
+    """Returns the idealised imperfection profile.
+
+    JIP    
     """
     return delta_f * (x / L_o) ** 3 * (4 - 3 * x / L_o)
 
@@ -45,12 +47,13 @@ def main(element_length, pipe):
     E = pipe["E"]
     I = pipe["I"]
     W_sub = pipe["W_sub"]
+    gamma_factor = pipe["gamma_factor"]
 
     print("delta_f [m]: L_o [m]")
 
     for delta_f in np.arange(0.1, 0.6, 0.1):
 
-        L_o = natural_wavelength(E, I, delta_f, W_sub)
+        L_o = natural_wavelength(gamma_factor, E, I, delta_f, W_sub)
 
         print(f"{delta_f:.1f}: {L_o:.3f}")
 
@@ -65,6 +68,6 @@ def main(element_length, pipe):
 
 
 if __name__ == "__main__":
-    pipe = {"E": 2.07e11, "I": 1.689e-05, "W_sub": 19.7084}
+    pipe = {"E": 2.07e11, "I": 1.6895e-05, "W_sub": 193.34, "gamma_factor": 1}
 
     main(0.3, pipe)

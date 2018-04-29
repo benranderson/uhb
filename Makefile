@@ -53,15 +53,13 @@ test: ## run tests quickly with the default Python
 	py.test tests/
 
 coverage: ## check code coverage quickly with the default Python
-	coverage run --source uhb -m pytest tests/
-	coverage report -m
-	coverage html
+	py.test --cov-report term --cov-report html  --cov=uhb tests/
 	$(BROWSER) htmlcov/index.html
 
-coverage-travis: ## check code coverage for Travis CI
-	coverage run --source uhb -m pytest tests/
-	coverage report -m
-	coverage html
+# coverage-travis: ## check code coverage for Travis CI
+# 	coverage run --source uhb -m pytest tests/
+# 	coverage report -m
+# 	coverage html
 
 release: clean ## package and upload a release
 	python setup.py sdist upload

@@ -33,27 +33,52 @@ def write_stiffnesses_to_file(results):
             o.write(f"\nSoil type: {soil}\n")
             o.write(f"{'-'*(11+len(soil))}\n\n")
             for burial_depth in results[soil]:
-                o.write(f"Burial depth: {burial_depth:.1f} m\n\n")
-                o.write("Axial\n")
-                T_u = results[soil][burial_depth]["T_u"]
-                delta_t = results[soil][burial_depth]["delta_t"]
-                K_a = results[soil][burial_depth]["K_a"]
-                o.write(f"{T_u:.6f}, {delta_t:.6f}, {K_a:.6f}\n")
-                o.write("Lateral\n")
-                P_u = results[soil][burial_depth]["P_u"]
-                delta_p = results[soil][burial_depth]["delta_p"]
-                K_l = results[soil][burial_depth]["K_l"]
-                o.write(f"{P_u:.6f}, {delta_p:.6f}, {K_l:.6f}\n")
-                o.write("Vertical Uplift\n")
+
+                soil_weight = results[soil][burial_depth]["soil weight"]
+
+                o.write(f"Burial depth: {burial_depth:.2f} m\n")
+                o.write(f"PUDL, 1, 2, -{soil_weight:.2f}\n\n")
+                o.write("Vertical up (Feed-in zone and intermediate zone)\n")
                 Q_u = results[soil][burial_depth]["Q_u"]
                 delta_qu = results[soil][burial_depth]["delta_qu"]
-                K_vu = results[soil][burial_depth]["K_vu"]
-                o.write(f"{Q_u:.6f}, {delta_qu:.6f}, {K_vu:.6f}\n")
-                o.write("Vertical Bearing\n")
+                o.write(f"RC, 1, {delta_qu:.5f}, {Q_u:.3E}, 100, {Q_u:.3E}\n")
+
+                o.write("Lateral (Feed-in zone)\n")
+                P_u = results[soil][burial_depth]["P_u"]
+                delta_p = results[soil][burial_depth]["delta_p"]
+                o.write(f"RC, 2, {delta_p:.5f}, {P_u:.3E}, 100, {P_u:.3E}\n")
+
+                o.write("Vertical down (Feed-in zone)\n")
                 Q_d = results[soil][burial_depth]["Q_d"]
                 delta_qd = results[soil][burial_depth]["delta_qd"]
-                K_vb = results[soil][burial_depth]["K_vb"]
-                o.write(f"{Q_d:.6f}, {delta_qd:.6f}, {K_vb:.6f}\n\n")
+                o.write(f"RC, 3, {delta_qd:.5f}, {Q_d:.3E}, 100, {Q_d:.3E}\n")
+
+                o.write("Lateral (Imperfection)\n")
+                o.write(f"RC, 4, {delta_p:.5f}, {P_u:.3E}, 100, {P_u:.3E}\n")
+
+                o.write("Vertical up (Imperfection)\n")
+                o.write(
+                    f"RC, 5, {delta_qu:.5f}, {Q_u - soil_weight:.3E}, {burial_depth:.5f}, -{soil_weight:.3E}, 100, -{soil_weight:.3E}\n"
+                )
+
+                o.write("Vertical down (Imperfection)\n")
+                o.write(f"RC, 6, {delta_qd:.5f}, {Q_d:.3E}, 100, {Q_d:.3E}\n")
+
+                o.write("Axial (Imperfection)\n")
+                T_u = results[soil][burial_depth]["T_u"]
+                delta_t = results[soil][burial_depth]["delta_t"]
+                o.write(f"RC, 7, {delta_t:.5f}, {T_u:.3E}, 100, {T_u:.3E}\n")
+
+                o.write("Axial (Intermediate)\n")
+                o.write(f"RC, 8, {delta_t:.5f}, {T_u:.3E}, 100, {T_u:.3E}\n")
+
+                o.write("Axial (Feed-in zone)\n")
+                o.write(f"RC, 9, {delta_t:.5f}, {T_u:.3E}, 100, {T_u:.3E}\n")
+
+                o.write("Vertical down (Backfill down resistance)\n")
+                o.write(f"RC, 10, {delta_qd:.5f}, {Q_d:.3E}, 100, {Q_d:.3E}\n\n")
+
+    print("Soil stiffnesses written to outputs/stiffnesses.txt")
 
 
 if __name__ == "__main__":
@@ -65,50 +90,29 @@ if __name__ == "__main__":
         "soft clay": {"c": 0.6, "phi_s": 0, "gamma": 18000},
     }
 
-    burial_depths = np.arange(0.1, 0.6, 0.1)
+    burial_depths = np.arange(0.25, 1.25, 0.25)
 
     results = {}
 
     for soil_case in ["dense sand", "soft clay"]:
-        print(soil_case)
         results[soil_case] = {}
+        c = soils[soil_case]["c"]
+        phi_s = soils[soil_case]["phi_s"]
+        gamma = soils[soil_case]["gamma"]
+
         for b in burial_depths:
             H = b + D / 2
-            T_u = soil.Tu(
-                D,
-                H,
-                soils[soil_case]["c"],
-                f,
-                soils[soil_case]["phi_s"],
-                soils[soil_case]["gamma"],
-            )
+            T_u = soil.Tu(D, H, c, f, phi_s, gamma)
             delta_t = soil.Delta_t(soil_case)
-            P_u = soil.Pu(
-                soils[soil_case]["c"],
-                H,
-                D,
-                soils[soil_case]["phi_s"],
-                soils[soil_case]["gamma"],
-            )
+            P_u = soil.Pu(c, H, D, phi_s, gamma)
             delta_p = soil.Delta_p(H, D)
-            Q_u = soil.Qu(
-                soils[soil_case]["phi_s"],
-                soils[soil_case]["c"],
-                D,
-                soils[soil_case]["gamma"],
-                H,
-            )
+            Q_u = soil.Qu(phi_s, c, D, gamma, H)
             delta_qu = soil.Delta_qu(soil_case, H, D)
-            Q_d = soil.Qd(
-                soils[soil_case]["phi_s"],
-                soils[soil_case]["c"],
-                D,
-                soils[soil_case]["gamma"],
-                H,
-            )
+            Q_d = soil.Qd(phi_s, c, D, gamma, H)
             delta_qd = soil.Delta_qd(soil_case, D)
 
             results[soil_case][b] = {
+                "soil weight": soil.soil_weight(gamma, b, D),
                 "T_u": T_u,
                 "delta_t": delta_t,
                 "K_a": T_u / delta_t,
