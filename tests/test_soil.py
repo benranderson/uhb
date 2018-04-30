@@ -5,130 +5,149 @@ from . import tol_check
 
 from uhb import soil
 
-test_inputs = {
-    "D_o": 0.508,
-    "gamma": 8000,
-    "c": 0,
-    "h": 4.725,
-    "psi": 35,
-    "soil_type": "dense sand",
-    "f": 0.67,
-}
+test_inputs = [
+    {
+        "D_o": 0.508,
+        "gamma": 8000,
+        "c": 0,
+        "h": 4.725,
+        "psi": 35,
+        "soil_type": "dense sand",
+        "f": 0.67,
+    },
+    {
+        "D_o": 0.1731,
+        "gamma": 18000,
+        "c": 0,
+        "h": 1,
+        "psi": 32,
+        "soil_type": "dense sand",
+        "f": 0.6,
+    },
+]
 
 
-def test_burial_depth_to_pipe_centerline():
+def test_soil_weight():
+    assert tol_check(soil.calculate_soil_weight(100, 100, 1), 10000)
+
+
+@pytest.mark.parametrize(
+    "inputs, expected", [(test_inputs[0], 4.979), (test_inputs[1], 1.087)]
+)
+def test_burial_depth_to_pipe_centerline(inputs, expected):
     assert tol_check(
-        soil.burial_depth_to_pipe_centreline(test_inputs["D_o"], test_inputs["h"]),
-        4.979,
+        soil.burial_depth_to_pipe_centreline(inputs["D_o"], inputs["h"]), expected
     )
 
 
-def test_Nqv():
-    H = soil.burial_depth_to_pipe_centreline(test_inputs["D_o"], test_inputs["h"])
-    assert tol_check(soil.Nqv(test_inputs["psi"], H, test_inputs["D_o"]), 7.796)
+@pytest.mark.parametrize(
+    "inputs, expected", [(test_inputs[0], 7.796), (test_inputs[1], 4.565)]
+)
+def test_Nqv(inputs, expected):
+    H = soil.burial_depth_to_pipe_centreline(inputs["D_o"], inputs["h"])
+    assert tol_check(soil.Nqv(inputs["psi"], H, inputs["D_o"]), expected)
 
 
-def test_Nc():
-    H = soil.burial_depth_to_pipe_centreline(test_inputs["D_o"], test_inputs["h"])
-    assert tol_check(soil.Nc(test_inputs["psi"], H, test_inputs["D_o"]), 46.128)
+@pytest.mark.parametrize(
+    "inputs, expected", [(test_inputs[0], 46.128), (test_inputs[1], 35.493)]
+)
+def test_Nc(inputs, expected):
+    H = soil.burial_depth_to_pipe_centreline(inputs["D_o"], inputs["h"])
+    assert tol_check(soil.Nc(inputs["psi"], H, inputs["D_o"]), expected)
 
 
-def test_Nq():
-    assert tol_check(soil.Nq(test_inputs["psi"]), 33.296)
+@pytest.mark.parametrize("psi, expected", [(35, 33.296), (32, 23.177)])
+def test_Nq(psi, expected):
+    assert tol_check(soil.Nq(psi), expected)
 
 
-def test_Ngamma():
-    assert tol_check(soil.Ngamma(test_inputs["psi"]), 44.701)
+@pytest.mark.parametrize("psi, expected", [(35, 44.701), (32, 26.05)])
+def test_Ngamma(psi, expected):
+    assert tol_check(soil.Ngamma(psi), expected)
 
 
-def test_Tu():
-    H = soil.burial_depth_to_pipe_centreline(test_inputs["D_o"], test_inputs["h"])
+@pytest.mark.parametrize(
+    "inputs, expected", [(test_inputs[0], 19667), (test_inputs[1], 2722)]
+)
+def test_axial_resistance_asce(inputs, expected):
+    H = soil.burial_depth_to_pipe_centreline(inputs["D_o"], inputs["h"])
     assert tol_check(
-        soil.Tu(
-            test_inputs["D_o"],
-            H,
-            test_inputs["c"],
-            test_inputs["f"],
-            test_inputs["psi"],
-            test_inputs["gamma"],
+        soil.axial_resistance_asce(
+            inputs["D_o"], H, inputs["c"], inputs["f"], inputs["psi"], inputs["gamma"]
         ),
-        19667,
+        expected,
     )
 
 
 @pytest.mark.parametrize(
     "soil_type, expected", [("dense sand", 0.003), ("loose sand", 0.005)]
 )
-def test_delta_t(soil_type, expected):
-    assert tol_check(soil.delta_t(soil_type), expected)
+def test_axial_delta_asce(soil_type, expected):
+    assert tol_check(soil.axial_delta_asce(soil_type), expected)
 
 
-def test_Pu():
-    H = soil.burial_depth_to_pipe_centreline(test_inputs["D_o"], test_inputs["h"])
+@pytest.mark.parametrize(
+    "inputs, expected", [(test_inputs[0], 368876), (test_inputs[1], 40553)]
+)
+def test_lateral_resistance_asce(inputs, expected):
+    H = soil.burial_depth_to_pipe_centreline(inputs["D_o"], inputs["h"])
     assert tol_check(
-        soil.Pu(
-            test_inputs["c"],
-            H,
-            test_inputs["D_o"],
-            test_inputs["psi"],
-            test_inputs["gamma"],
+        soil.lateral_resistance_asce(
+            inputs["c"], H, inputs["D_o"], inputs["psi"], inputs["gamma"]
         ),
-        368876,
+        expected,
     )
 
 
 @pytest.mark.parametrize(
-    "h, expected", [(4.725, 0.0508), (4.725, 0.0508)]
+    "inputs, expected", [(test_inputs[0], 0.0508), (test_inputs[1], 0.01731)]
 )
-def test_delta_p(h, expected):
-    H = soil.burial_depth_to_pipe_centreline(test_inputs["D_o"], test_inputs["h"])    
-    assert tol_check(soil.delta_p(H, test_inputs["D_o"]), expected)
+def test_lateral_delta_asce(inputs, expected):
+    H = soil.burial_depth_to_pipe_centreline(inputs["D_o"], inputs["h"])
+    assert tol_check(soil.lateral_delta_asce(H, inputs["D_o"]), expected)
 
 
-def test_Qu():
-    H = soil.burial_depth_to_pipe_centreline(test_inputs["D_o"], test_inputs["h"])
+@pytest.mark.parametrize(
+    "inputs, expected", [(test_inputs[0], 157757), (test_inputs[1], 15455)]
+)
+def test_uplift_resistance_asce(inputs, expected):
+    H = soil.burial_depth_to_pipe_centreline(inputs["D_o"], inputs["h"])
     assert tol_check(
-        soil.Qu(
-            test_inputs["psi"],
-            test_inputs["c"],
-            test_inputs["D_o"],
-            test_inputs["gamma"],
-            H,
+        soil.uplift_resistance_asce(
+            inputs["psi"], inputs["c"], inputs["D_o"], inputs["gamma"], H
         ),
-        157757,
+        expected,
     )
 
 
 @pytest.mark.parametrize(
-    "soil_type, expected", [("loose sand", 0.04979), ("dense sand", 0.04979)]
+    "inputs, expected", [(test_inputs[0], 0.04979), (test_inputs[1], 0.01087)]
 )
-def test_delta_qu(soil_type, expected):
-    H = soil.burial_depth_to_pipe_centreline(test_inputs["D_o"], test_inputs["h"])    
-    assert tol_check(soil.delta_qu(soil_type, H, test_inputs["D_o"]), expected)
-
-
-def test_Qd():
-    H = soil.burial_depth_to_pipe_centreline(test_inputs["D_o"], test_inputs["h"])
+def test_uplift_delta_asce(inputs, expected):
+    H = soil.burial_depth_to_pipe_centreline(inputs["D_o"], inputs["h"])
     assert tol_check(
-        soil.Qd(
-            test_inputs["psi"],
-            test_inputs["c"],
-            test_inputs["D_o"],
-            test_inputs["gamma"],
-            H,
+        soil.uplift_delta_asce(inputs["soil_type"], H, inputs["D_o"]), expected
+    )
+
+
+@pytest.mark.parametrize("inputs, expected", [(test_inputs[1], 89413)])
+def test_bearing_resistance_asce(inputs, expected):
+    H = soil.burial_depth_to_pipe_centreline(inputs["D_o"], inputs["h"])
+    assert tol_check(
+        soil.bearing_resistance_asce(
+            inputs["psi"], inputs["c"], inputs["D_o"], inputs["gamma"], H, 1025
         ),
-        776461,
+        expected,
     )
 
 
 @pytest.mark.parametrize(
-    "soil_type, expected", [("loose sand", 0.0508), ("stiff clay", 0.1016)]
+    "soil_type, D, expected", [("sand", 100, 10), ("clay", 100, 20)]
 )
-def test_delta_qd(soil_type, expected):
-    assert tol_check(soil.delta_qd(soil_type, test_inputs["D_o"]), expected)
+def test_bearing_delta_asce(soil_type, D, expected):
+    assert tol_check(soil.bearing_delta_asce(soil_type, D), expected)
 
-# @pytest.mark.parametrize("H, expected", [(0.5, 1557.9), (1, 3115.8)])
-# def test_soil_weight(H, expected):
-#     assert tol_check(
-#         soil.soil_weight(test_inputs["gamma"], test_inputs["D_o"], H), expected
-#     )
+
+def test_bearing_delta_asce_unknown_soil():
+    with pytest.raises(ValueError):
+        soil.bearing_delta_asce("none", 100)

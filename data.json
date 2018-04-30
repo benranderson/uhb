@@ -8,6 +8,7 @@
   "T_a": 0,
   "rho_p": 7850,
   "rho_coat": 900,
+  "rho_cont": 0,
   "v": 0.3,
   "alpha": 1.17e-5,
   "E": 207e9,
@@ -23,5 +24,9 @@
   "f": 0.36,
   "rho_sw": 1025,
   "g": 9.81,
-  "el_lengths": { "imp": 0.3, "int": 1.5, "feed": 15 }
+  "el_lengths": {
+    "imp": 0.3,
+    "int": 1.5,
+    "feed": 15
+  }
 }

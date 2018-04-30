@@ -12,11 +12,6 @@ def calculate_soil_weight(gamma, D, H):
     return gamma * D * H
 
 
-#######################
-# ALA Buried Steel Pipe
-#######################
-
-
 def burial_depth_to_pipe_centreline(D_o, h):
     return 0.5 * D_o + h
 
@@ -103,10 +98,6 @@ def Nc(psi, H, D):
     )
 
 
-# psi = psi * 2 * pi / 360
-# return (Nq(psi, H, D) - 1) * cot(psi)
-
-
 def Nq(psi):
     """ Soil bearing capacity factor
     """
@@ -122,7 +113,16 @@ def Ngamma(psi):
 # AXIAL
 
 
-def Tu(D, H, c, f, psi, gamma):
+def axial_delta_asce(soil):
+    """ Displacement at Tu
+    """
+    delta_ts = {
+        "dense sand": 0.003, "loose sand": 0.005, "stiff clay": 0.008, "soft clay": 0.01
+    }
+    return delta_ts.get(soil, ValueError("Unknown soil type."))
+
+
+def axial_resistance_asce(D, H, c, f, psi, gamma):
     """ Maximum axial soil force per unit length
     """
     alpha = 0.608 - 0.123 * c - 0.274 / (c ** 2 + 1) + 0.695 / (c ** 3 + 1)
@@ -132,40 +132,25 @@ def Tu(D, H, c, f, psi, gamma):
     )
 
 
-def delta_t(soil):
-    """ Displacement at Tu
-    """
-    delta_ts = {
-        "dense sand": 0.003, "loose sand": 0.005, "stiff clay": 0.008, "soft clay": 0.01
-    }
-    return delta_ts.get(soil, ValueError("Unknown soil type."))
-
-
 # LATERAL
 
 
-def Pu(c, H, D, psi, gamma):
-    """ Maximum lateral soil force per unit length
-    """
-    return Nch(c, H, D) * c * D + Nqh(psi, H, D) * gamma * H * D
-
-
-def delta_p(H, D):
+def lateral_delta_asce(H, D):
     """ Displacement at Pu
     """
     return min(0.04 * (H + D / 2), 0.1 * D)
 
 
+def lateral_resistance_asce(c, H, D, psi, gamma):
+    """ Maximum lateral soil force per unit length
+    """
+    return Nch(c, H, D) * c * D + Nqh(psi, H, D) * gamma * H * D
+
+
 # VERTICAL UPLIFT
 
 
-def Qu(psi, c, D, gamma, H):
-    """ Vertical uplift soil resistance per unit length
-    """
-    return Ncv(c, H, D) * c * D + Nqv(psi, H, D) * gamma * H * D
-
-
-def delta_qu(soil, H, D):
+def uplift_delta_asce(soil, H, D):
     """ Displacement at Qu
     """
     if "sand" in soil:
@@ -178,10 +163,55 @@ def delta_qu(soil, H, D):
         raise ValueError("Unknown soil type.")
 
 
+def uplift_resistance_asce(psi, c, D, gamma, H):
+    """ Vertical uplift soil resistance per unit length
+    """
+    return Ncv(c, H, D) * c * D + Nqv(psi, H, D) * gamma * H * D
+
+
+def uplift_resistance_sand_dnvf114(soil, gamma, H, D):
+    """Returns drained uplift resistance.
+
+    DNVGL-RP-F114 - Equation (5.5)
+
+    :param soil: str
+    :param gamma: Submerged weight of soil []
+    :param H: Cover height (above pipe) [m]
+    :param D: Outer pipe diameter [m]
+    """
+    # TODO: interpolate f using psi
+    resistance_factors = {"loose sand": 0.29, "medium sand": 0.47, "dense sand": 0.62}
+    f = resistance_factors[soil]
+    return gamma * H * D + gamma * D ** 2 * (0.5 - pi / 8) + f * gamma * (
+        H + 0.5 * D
+    ) ** 2
+
+
+def uplift_resistance_sand_dnvf110(H, D, gamma, f):
+    return (1 + f * H / D) * (gamma * H * D)
+
+
+def uplift_resistance_clay_otc6486(H, D, gamma, c):
+    return gamma * H * D + 2 * H * c
+
+
 # VERTICAL BEARING
 
 
-def Qd(psi, c, D, gamma, H):
+def bearing_delta_asce(soil, D):
+    """ Displacement at Qu
+    """
+    if "sand" in soil:
+        return 0.1 * D
+
+    elif "clay" in soil:
+        return 0.2 * D
+
+    else:
+        raise ValueError("Unknown soil type.")
+
+
+def bearing_resistance_asce(psi, c, D, gamma, H, rho_sw):
     """ Vertical bearing soil resistance per unit length
     """
     return (
@@ -193,24 +223,11 @@ def Qd(psi, c, D, gamma, H):
         * H
         * D
         + Ngamma(psi)
-        * (gamma + (1000 * 9.81))
+        * (gamma + (rho_sw * 9.81))
         * D
         ** 2
         / 2
     )
-
-
-def delta_qd(soil, D):
-    """ Displacement at Qu
-    """
-    if "sand" in soil:
-        return 0.1 * D
-
-    elif "clay" in soil:
-        return 0.2 * D
-
-    else:
-        raise ValueError("Unknown soil type.")
 
 
 def DepthEquilibrium(psi, c, D, gamma, soil):
@@ -226,98 +243,61 @@ def DepthEquilibrium(psi, c, D, gamma, soil):
     return Fd
 
 
-#############
-# DNV-RP-F110
-#############
-
-
-def uplift_resistance(soil, gamma, H, D):
-    """Returns drained uplift resistance.
-
-    DNVGL-RP-F114 - Equation (5.5)
-
-    :param soil: str
-    :param gamma: Submerged weight of soil []
-    :param H: Cover height (above pipe) [m]
-    :param D: Outer pipe diameter [m]
-    """
-    resistance_factors = {"loose sand": 0.29, "medium sand": 0.47, "dense sand": 0.62}
-    f = resistance_factors[soil]
-    return gamma * H * D + gamma * D ** 2 * (0.5 - pi / 8) + f * gamma * (
-        H + 0.5 * D
-    ) ** 2
-
-
-def sand_otc_6335(H, D, f):
-    return H * D * (1 + f * H / D)
-
-
-def generate_soil_springs(data, h):
+def generate_soil_springs(data, h, models):
     D_o = data["D"] + 2 * data["t_coat"]
     psi, c, gamma, f = data["psi"], data["c"], data["gamma_s"], data["f"]
     H = burial_depth_to_pipe_centreline(D_o, h)
-    soil = data["soil_type"]
+    soil, rho_sw = data["soil_type"], data["rho_sw"]
     l_imp = data["el_lengths"]["imp"]
     l_int = data["el_lengths"]["int"]
     l_feed = data["el_lengths"]["feed"]
 
     rcs = {}
 
-    # RC 1 (vertical uplift - feed / int)
-    soil_weight = calculate_soil_weight(gamma, D_o, h)
-    peak = Qd(psi, c, D_o, gamma, H) - soil_weight
-    rcs["1"] = {"deltas": [100 * delta_qu(soil, H, D_o)], "forces": [100 * peak]}
+    # vertical uplift
+    uplift_mob = uplift_delta_asce(soil, H, D_o)
 
-    # RC 5 (vertical uplift - imp)
+    if models["uplift"] == "otc":
+        uplift = uplift_resistance_clay_otc6486(H, D_o, gamma, c)
+    elif models["uplift"] == "f114":
+        uplift = uplift_resistance_sand_dnvf114(soil, gamma, H, D_o)
+    elif models["uplift"] == "f110":
+        uplift = uplift_resistance_sand_dnvf110(H, D_o, gamma, f)
+    else:
+        uplift = uplift_resistance_asce(psi, c, D_o, gamma, H)
+
+    soil_weight = calculate_soil_weight(gamma, D_o, h)
+    peak = uplift - soil_weight
+
+    rcs["1"] = {"deltas": [100 * uplift_mob], "forces": [100 * peak]}
     rcs["5"] = {
-        "deltas": [delta_qu(soil, H, D_o), h, 100],
+        "deltas": [uplift_mob, h, 100],
         "forces": [peak * l_imp, -soil_weight * l_imp, -soil_weight * l_imp],
     }
 
-    # RC 7 (axial - imp)
-    rcs["7"] = {
-        "deltas": [delta_t(soil), 100],
-        "forces": [
-            l_imp * Tu(D_o, H, c, f, psi, gamma), l_imp * Tu(D_o, H, c, f, psi, gamma)
-        ],
+    # axial
+    axial_mob = axial_delta_asce(soil)
+    axial = axial_resistance_asce(D_o, H, c, f, psi, gamma)
+    rcs["7"] = {"deltas": [axial_mob, 100], "forces": [axial * l_imp, axial * l_imp]}
+    rcs["8"] = {"deltas": [axial_mob, 100], "forces": [axial * l_int, axial * l_int]}
+    rcs["9"] = {"deltas": [axial_mob, 100], "forces": [axial * l_feed, axial * l_feed]}
+
+    # lateral
+    lateral_mob = lateral_delta_asce(H, D_o)
+    lateral = lateral_resistance_asce(c, H, D_o, psi, gamma)
+    rcs["2"] = {"deltas": [lateral_mob, 100], "forces": [lateral, lateral]}
+    rcs["4"] = {"deltas": [lateral_mob, 100], "forces": [lateral, lateral]}
+
+    # vertical bearing
+    bearing_mob = bearing_delta_asce(soil, D_o)
+    bearing = bearing_resistance_asce(psi, c, D_o, gamma, H, rho_sw)
+    rcs["3"] = {"deltas": [bearing_mob, 100], "forces": [bearing, bearing]}
+    rcs["6"] = {
+        "deltas": [bearing_mob, 100], "forces": [bearing * l_imp, bearing * l_imp]
     }
-
-    # RC 8 (axial - int)
-    rcs["8"] = {
-        "deltas": [delta_t(soil), 100],
-        "forces": [
-            l_int * Tu(D_o, H, c, f, psi, gamma), l_int * Tu(D_o, H, c, f, psi, gamma)
-        ],
+    rcs["10"] = {
+        "deltas": [bearing_mob, 100], "forces": [bearing * l_imp, bearing * l_imp]
     }
-
-    # RC 9 (axial - feed)
-    rcs["9"] = {
-        "deltas": [delta_t(soil), 100],
-        "forces": [
-            l_feed * Tu(D_o, H, c, f, psi, gamma), l_feed * Tu(D_o, H, c, f, psi, gamma)
-        ],
-    }
-
-    # RC 2 (lateral - feed / int)
-    rcs["2"] = {
-        "deltas": [delta_p(H, D_o), 100],
-        "forces": [Pu(c, H, D_o, psi, gamma), Pu(c, H, D_o, psi, gamma)],
-    }
-
-    # RC 4 (lateral - imp)
-    rcs["4"] = {
-        "deltas": [delta_p(H, D_o), 100],
-        "forces": [Pu(c, H, D_o, psi, gamma), Pu(c, H, D_o, psi, gamma)],
-    }
-
-    # RC 3 (vertical bearing - feed / int)
-    # TODO
-
-    # RC 6 (vertical bearing - imp)
-    # TODO
-
-    # RC 10 (vertical bearing - imp)
-    # TODO
 
     return rcs
 
