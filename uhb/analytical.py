@@ -1,7 +1,7 @@
 import scipy.optimize
 
-import uhb.general as general
-import uhb.soil as soil
+from util import general
+from util import psi
 
 
 def required_download(delta, E, I, EAF, w_o):
@@ -16,14 +16,10 @@ def required_sand_cover_height(required_resistance, D, gamma, f, c):
     """
 
     def solve_sand(H):
-        return soil.uplift_resistance_sand_dnvf110(
-            H, D, gamma, f
-        ) - required_resistance
+        return psi.R_max(H, D, gamma, f) - required_resistance
 
     def solve_clay(H):
-        return soil.uplift_resistance_clay_otc6486(
-            H, D, gamma, c
-        ) - required_resistance
+        return psi.P_otc6486(H, D, gamma, c) - required_resistance
 
     # TODO: exception catch for solve
     if c > 0:
@@ -54,4 +50,4 @@ def run_analytical_calc(data):
     q = max(w - w_o, 0)
     H = required_sand_cover_height(q, D_tot, gamma, f, c)
 
-    return {"EAF": EAF, "w_o": w_o, "w": w, "q": q, "H": H}
+    return {"I": I, "EAF": EAF, "w_o": w_o, "w": w, "q": q, "H": H}
