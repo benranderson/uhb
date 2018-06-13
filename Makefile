@@ -63,14 +63,18 @@ coverage-travis: ## check code coverage for Travis CI
 	coverage report -m
 	coverage html
 
-release: clean ## package and upload a release
-	python setup.py sdist upload
-	python setup.py bdist_wheel upload
-
 dist: clean ## builds source and wheel package
-	python setup.py sdist
-	python setup.py bdist_wheel
+	python setup.py sdist bdist_wheel
 	ls -l dist
+
+release: dist ## package and upload a release to PyPI
+	twine upload dist/*
+
+test-release: dist ## package and upload a release to TestPyPI
+	twine upload --repository-url https://test.pypi.org/legacy/ dist/*
 
 install: clean ## install the package to the active Python's site-packages
 	python setup.py install
+
+dev-install: clean ## install package to the active Python's site-packages while allowing edit
+	python setup.py develop

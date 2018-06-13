@@ -18,7 +18,7 @@ Includes:
 ## Installation
 
 ```sh
-$ pip install wallthick
+$ pip install uhb
 ```
 
 <!-- Markdown link & img dfn's -->
