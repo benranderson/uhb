@@ -2,7 +2,7 @@
 
 import pytest
 
-import psi
+from uhb import psi
 
 
 @pytest.fixture(params=[

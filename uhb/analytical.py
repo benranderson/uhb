@@ -1,7 +1,7 @@
 import scipy.optimize
 
-from util import general
-from util import psi
+from uhb import general
+from uhb import psi
 
 
 def required_download(delta, E, I, EAF, w_o):

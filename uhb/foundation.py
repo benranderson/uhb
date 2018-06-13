@@ -3,23 +3,23 @@ import numpy as np
 
 
 def natural_wavelength(gamma_factor, E, I, delta_f, W_sub):
-    """Returns the factored natural wavelength i.e. the distance from prop to
-    touchdown.
+    """Return the factored natural wavelength [m] i.e. the distance from prop to
+    touchdown - JIP. 
 
-    JIP 
-
-    :param E: Young's Modulus []
-    :param I: Second moment of area []
-    :param delta_f: 
-    :W_sub: Submerged pipe weight [kg/m^3]
+    :param float E: Young's Modulus [Pa]
+    :param float I: Second moment of area [m^4]
+    :param float delta_f: Imperfection height [m]
+    :param W_sub float: Submerged pipe weight [kg/m^3]
     """
     return gamma_factor * (72 * E * I * delta_f / W_sub) ** (1 / 4)
 
 
 def foundation_profile(x, delta_f, L_o):
-    """Returns the idealised imperfection profile.
+    """Return the idealised imperfection profile [m] - JIP.
 
-    JIP    
+    :param float x: Distance along profile [m]
+    :param float delta_f: Imperfection height [m]
+    :param float L_o: Natural wavelength [m]
     """
     return delta_f * (x / L_o) ** 3 * (4 - 3 * x / L_o)
 

@@ -3,7 +3,7 @@
 import pytest
 from . import tol_check
 
-import general
+from uhb import general
 
 
 @pytest.fixture(params=[

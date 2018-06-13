@@ -2,6 +2,9 @@ import os
 import click
 import json
 
+from uhb import analytical as a, psi as p, ramberg as r
+
+
 # import util.psi as s
 # import uhb.analytical as analytical
 
@@ -29,7 +32,7 @@ def test():
 def anal(data):
     """ Calculate analytical solution for the required soil cover height.
     """
-    results = analytical.run_analytical_calc(data.obj)
+    results = a.run_analytical_calc(data.obj)
     click.secho(f"Effective Axial Force [N]: {results['EAF']}", fg="green")
     click.secho(f"Pipeline Submerged Weight [N/m]: {results['w_o']}", fg="green")
     click.secho(f"Required Download for Stability [N]: {results['w']}", fg="green")
@@ -48,16 +51,16 @@ def anal(data):
 @click.option("--bearing-model", "-bm", type=click.Choice(["asce"]), default="asce")
 @click.option("--axial-model", "-am", type=click.Choice(["asce"]), default="asce")
 @click.option("--lateral-model", "-lm", type=click.Choice(["asce"]), default="asce")
-def psi(
+def soil_springs(
     data, cover_height, uplift_model, bearing_model, axial_model, lateral_model
 ):
     """ Calculate soil springs.
     """
 
-    uplift_spring = s.gen_uplift_spring(data.obj, cover_height, uplift_model)
-    bearing_spring = s.gen_bearing_spring(data.obj, cover_height, bearing_model)
-    axial_spring = s.gen_axial_spring(data.obj, cover_height, axial_model)
-    lateral_spring = s.gen_lateral_spring(data.obj, cover_height, lateral_model)
+    uplift_spring = p.gen_uplift_spring(data.obj, cover_height, uplift_model)
+    bearing_spring = p.gen_bearing_spring(data.obj, cover_height, bearing_model)
+    axial_spring = p.gen_axial_spring(data.obj, cover_height, axial_model)
+    lateral_spring = p.gen_lateral_spring(data.obj, cover_height, lateral_model)
 
     click.secho("Soil Springs:", fg="yellow")
     click.secho(f"Uplift ({uplift_model}):\n{uplift_spring}", fg="green")
@@ -66,5 +69,10 @@ def psi(
     click.secho(f"Lateral ({lateral_model}):\n{lateral_spring}", fg="green")
 
 
-if __name__ == "__main__":
-    main()
+@main.command()
+@click.pass_context
+def nonlinear(data):
+    """Print non-linear material model.
+    """
+    rcs = r.nonlinear_rc(data.obj)
+    click.secho(f"{rcs}", fg="green")

@@ -7,7 +7,7 @@ import click
 
 from click.testing import CliRunner
 
-import cli
+from uhb import cli
 
 test_inputs = {"D_o": 0.1731, "f": 0.6}
 
