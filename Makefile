@@ -45,6 +45,8 @@ clean-test: ## remove test and coverage artifacts
 	rm -fr .tox/
 	rm -f .coverage
 	rm -fr htmlcov/
+	rm -fr .pytest_cache
+	rm -fr .cache
 
 lint: ## check style with pylint
 	pylint uhb tests

@@ -51,7 +51,7 @@ def anal(data):
 @click.option("--bearing-model", "-bm", type=click.Choice(["asce"]), default="asce")
 @click.option("--axial-model", "-am", type=click.Choice(["asce"]), default="asce")
 @click.option("--lateral-model", "-lm", type=click.Choice(["asce"]), default="asce")
-def soil_springs(
+def soils(
     data, cover_height, uplift_model, bearing_model, axial_model, lateral_model
 ):
     """ Calculate soil springs.
