@@ -76,5 +76,5 @@ test-release: dist ## package and upload a release to TestPyPI
 install: clean ## install the package to the active Python's site-packages
 	python setup.py install
 
-dev-install: clean ## install package to the active Python's site-packages while allowing edit
-	python setup.py develop
+dev-install: clean ## install editable package to development environment
+	pip install --editable .
