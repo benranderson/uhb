@@ -277,26 +277,14 @@ def gen_uplift_spring(data, h, model="asce"):
     """ Returns vertical uplift soil spring as a tuple of displacement and 
     resistance based on chosen soil model.
     """
-    D_o = general.total_outside_diameter(data["D"], data["t_coat"])
+    D_o = general.total_outside_diameter(data.D, data.t_coat)
     H = depth_to_centre(D_o, h)
-    disp = delta_qu(data["soil_type"], H, D_o)
+    disp = delta_qu(data.soil_type, H, D_o)
     springs = {
-        "asce": (
-            disp,
-            Qu(data["psi_s"], data["c"], D_o, data["gamma_s"], H)
-        ),
-        "f114": (
-            disp,
-            F_uplift_d(data["soil_type"], data["gamma_s"], H, D_o)
-        ),
-        "f110": (
-            disp,
-            R_max(H, D_o, data["gamma_s"], data["f"])
-        ),
-        "otc": (
-            disp,
-            P_otc6486(H, D_o, data["gamma_s"], data["c"])
-        ),
+        "asce": (disp, Qu(data.psi_s, data.c, D_o, data.gamma_s, H)),
+        "f114": (disp, F_uplift_d(data.soil_type, data.gamma_s, H, D_o)),
+        "f110": (disp, R_max(H, D_o, data.gamma_s, data.f)),
+        "otc": (disp, P_otc6486(H, D_o, data.gamma_s, data.c)),
     }
     return springs.get(model, ValueError("Unknown uplift soil model."))
 
@@ -305,15 +293,12 @@ def gen_bearing_spring(data, h, model="asce"):
     """ Returns bearing soil spring as a tuple of displacement and resistance
     based on chosen soil model.
     """
-    D_o = general.total_outside_diameter(data["D"], data["t_coat"])
+    D_o = general.total_outside_diameter(data.D, data.t_coat)
     H = depth_to_centre(D_o, h)
-    disp = delta_qd(data["soil_type"], D_o)
+    disp = delta_qd(data.soil_type, D_o)
     springs = {
-        "asce": (
-            disp,
-            Qd(data["psi_s"], data["c"], D_o,
-               data["gamma_s"], H, data["rho_sw"])
-        ),
+        "asce": (disp,
+                 Qd(data.psi_s, data.c, D_o, data.gamma_s, H, data.rho_sw)),
     }
     return springs.get(model, ValueError("Unknown bearing soil model."))
 
@@ -322,14 +307,13 @@ def gen_axial_spring(data, h, model="asce"):
     """ Returns axial soil spring as a tuple of displacement and resistance
     based on chosen soil model.
     """
-    D_o = general.total_outside_diameter(data["D"], data["t_coat"])
-    disp = delta_t(data["soil_type"])
+    D_o = general.total_outside_diameter(data.D, data.t_coat)
+    disp = delta_t(data.soil_type)
     springs = {
-        "asce": (
-            disp,
-            Tu(D_o, depth_to_centre(D_o, h), data["c"], data["f"], data["psi_s"],
-               data["gamma_s"])
-        ),
+        "asce": (disp,
+                 Tu(D_o, depth_to_centre(D_o, h), data.c, data.f, data.psi_s,
+                    data.gamma_s)
+                 ),
     }
     return springs.get(model, ValueError("Unknown axial soil model."))
 
@@ -338,13 +322,10 @@ def gen_lateral_spring(data, h, model="asce"):
     """ Returns lateral soil spring as a tuple of displacement and resistance
     based on chosen soil model.
     """
-    D_o = general.total_outside_diameter(data["D"], data["t_coat"])
+    D_o = general.total_outside_diameter(data.D, data.t_coat)
     H = depth_to_centre(D_o, h)
     disp = delta_p(H, D_o)
     springs = {
-        "asce": (
-            disp,
-            Pu(data["c"], H, D_o, data["psi_s"], data["gamma_s"])
-        ),
+        "asce": (disp, Pu(data.c, H, D_o, data.psi_s, data.gamma_s)),
     }
     return springs.get(model, ValueError("Unknown lateral soil model."))

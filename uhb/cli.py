@@ -77,10 +77,10 @@ def soils(
         data.obj, cover_height, lateral_model)
 
     click.secho("Soil Springs:", fg="yellow")
-    click.secho(f"Uplift ({uplift_model}):\n{uplift_spring}", fg="green")
-    click.secho(f"Bearing ({bearing_model}):\n{bearing_spring}", fg="green")
-    click.secho(f"Axial ({axial_model}):\n{axial_spring}", fg="green")
-    click.secho(f"Lateral ({lateral_model}):\n{lateral_spring}", fg="green")
+    click.secho(f"Uplift | {uplift_model}:\n{uplift_spring}", fg="green")
+    click.secho(f"Bearing | {bearing_model}:\n{bearing_spring}", fg="green")
+    click.secho(f"Axial | {axial_model}:\n{axial_spring}", fg="green")
+    click.secho(f"Lateral | {lateral_model}:\n{lateral_spring}", fg="green")
 
 
 @main.command()
