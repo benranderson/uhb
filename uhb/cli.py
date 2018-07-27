@@ -1,6 +1,7 @@
 import os
 import click
 import json
+from collections import namedtuple
 
 from uhb import analytical as a, psi as p, ramberg as r
 
@@ -13,11 +14,17 @@ PROJECT_ROOT = os.path.join(HERE, os.pardir)
 TEST_PATH = os.path.join(PROJECT_ROOT, 'tests')
 
 
+def convert(dictionary):
+    """Convert a dictionary to a named tuple."""
+    return namedtuple('Data', dictionary.keys())(**dictionary)
+
+
 @click.group()
 @click.pass_context
 def main(data):
     with open("data.json", "r") as input_file:
-        data.obj = json.load(input_file)
+        input_dict = json.load(input_file)
+        data.obj = convert(input_dict)
 
 
 @main.command()
@@ -34,15 +41,15 @@ def anal(data):
     """
     results = a.run_analytical_calc(data.obj)
     click.secho("Effective Axial Force [N]:")
-    click.secho(f"{results['EAF']}", fg="green")
+    click.secho(f"{results.EAF}", fg="green")
     click.secho(f"Pipeline Submerged Weight [N/m]:")
-    click.secho(f"{results['w_o']}", fg="green")
+    click.secho(f"{results.w_o}", fg="green")
     click.secho(f"Required Download for Stability [N]:")
-    click.secho(f"{results['w']}", fg="green")
+    click.secho(f"{results.w}", fg="green")
     click.secho(f"Soil Required Uplift Resistance [N/m]:")
-    click.secho(f"{results['q']}", fg="green")
+    click.secho(f"{results.q}", fg="green")
     click.secho(f"Required Soil Cover Height [m]:")
-    click.secho(f"{results['H']}", fg="green")
+    click.secho(f"{results.H}", fg="green")
 
 
 @main.command()

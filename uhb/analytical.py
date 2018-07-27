@@ -1,3 +1,4 @@
+from collections import namedtuple
 import scipy.optimize
 
 from uhb import general
@@ -30,24 +31,27 @@ def required_sand_cover_height(required_resistance, D, gamma, f, c):
 
 
 def run_analytical_calc(data):
-    D, t, t_coat = data["D"], data["t"], data["t_coat"]
-    delta_P = data["P_i"] - data["P_e"]
-    delta_T = data["T"] - data["T_a"]
-    v, alpha, E, rho_p = data["v"], data["alpha"], data["E"], data["rho_p"]
-    rho_coat, rho_cont = data["rho_coat"], data["rho_cont"]
-    delta = max(data["deltas"])
-    soil_type = data["soil_type"]
-    gamma, f, c = data["gamma_s"], data["f"], data["c"]
-    rho_sw, g = data["rho_sw"], data["g"]
+    D, t, t_coat = data.D, data.t, data.t_coat
+    delta_P = data.P_i - data.P_e
+    delta_T = data.T - data.T_a
+    v, alpha, E, rho_p = data.v, data.alpha, data.E, data.rho_p
+    rho_coat, rho_cont = data.rho_coat, data.rho_cont
+    delta = max(data.deltas)
+    soil_type = data.soil_type
+    gamma, f, c = data.gamma_s, data.f, data.c
+    rho_sw, g = data.rho_sw, data.g
 
     D_tot = general.total_outside_diameter(D, t_coat)
     A_i = general.internal_area(D, t)
     A_s = general.area_of_steel(D, t)
-    EAF = abs(general.effective_axial_force(0, delta_P, A_i, v, A_s, E, alpha, delta_T))
+    EAF = abs(general.effective_axial_force(
+        0, delta_P, A_i, v, A_s, E, alpha, delta_T))
     I = general.second_moment_of_area(D, t)
-    w_o = general.submerged_weight(D, t, t_coat, rho_p, rho_coat, rho_cont, rho_sw, g)
+    w_o = general.submerged_weight(
+        D, t, t_coat, rho_p, rho_coat, rho_cont, rho_sw, g)
     w = required_download(delta, E, I, EAF, w_o)
     q = max(w - w_o, 0)
     H = required_sand_cover_height(q, D_tot, gamma, f, c)
 
-    return {"I": I, "EAF": EAF, "w_o": w_o, "w": w, "q": q, "H": H}
+    Results = namedtuple("Results", "I EAF w_o w q H")
+    return Results(I, EAF, w_o, w, q, H)
